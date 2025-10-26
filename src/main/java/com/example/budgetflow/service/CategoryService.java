@@ -59,5 +59,8 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-
+    public void deleteCategory(Long id){
+        log.info("Удаление категории с ID: {}", id);
+        categoryRepository.deleteById(id);
+    }
 }
