@@ -42,5 +42,10 @@ public class CategoryService {
         return categoryRepository.findByType(type);
     }
 
+    public Category getCategoryById(Long id){
+        return categoryRepository.findById(id).
+                orElseThrow(() -> new IllegalArgumentException("Категория не найдена с ID: " + id)));
+    }
+
 
 }
