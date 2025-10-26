@@ -1,0 +1,35 @@
+package com.example.budgetflow.service;
+
+import com.example.budgetflow.entity.Category;
+import com.example.budgetflow.repository.CategoryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class CategoryService {
+
+    private final CategoryRepository categoryRepository;
+
+    public Category createCategory(String name, String type, String icon, String color){
+        log.info("Создание новой категории: {}", name);
+
+        if(categoryRepository.existsByName(name)){
+            throw new IllegalArgumentException("Категория с таким именем уже существует");
+        }
+
+        Category category = new Category();
+        category.setName(name);
+        category.setType(type);
+        category.setIcon(icon);
+        category.setColor(color);
+
+        return categoryRepository.save(category);
+    }
+
+
+}
