@@ -44,7 +44,19 @@ public class CategoryService {
 
     public Category getCategoryById(Long id){
         return categoryRepository.findById(id).
-                orElseThrow(() -> new IllegalArgumentException("Категория не найдена с ID: " + id)));
+                orElseThrow(() -> new IllegalArgumentException("Категория не найдена с ID: " + id));
+    }
+
+    public Category updatedCategory(Long id,String name,String type,String icon, String color){
+        log.info("Обновление категории с ID: {}", id);
+
+        Category category = getCategoryById(id);
+        category.setName(name);
+        category.setType(type);
+        category.setIcon(icon);
+        category.setColor(color);
+
+        return categoryRepository.save(category);
     }
 
 
