@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,6 +31,10 @@ public class CategoryService {
         category.setColor(color);
 
         return categoryRepository.save(category);
+    }
+
+    public List<Category> getAllCategories(){
+        return categoryRepository.findAll();
     }
 
 
