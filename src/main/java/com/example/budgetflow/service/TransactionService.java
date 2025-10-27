@@ -69,4 +69,9 @@ public class TransactionService {
         Double total = transactionRepository.sumAmountByUserIdAndType(userId,"INCOME");
         return total != null ? total : 0.0;
     }
+
+    public Double getTotalExpense(Long userId){
+        Double total = transactionRepository.sumAmountByUserIdAndType(userId,"EXPENSE");
+        return total != null ? total : 0.0;
+    }
 }
