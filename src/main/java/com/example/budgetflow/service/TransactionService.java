@@ -97,4 +97,9 @@ public class TransactionService {
 
         return transactionRepository.save(transaction);
     }
+
+    public void deleteTransaction(Long transactionId){
+        log.info("Удаление транзакции с ID: {}", transactionId);
+        transactionRepository.deleteById(transactionId);
+    }
 }
