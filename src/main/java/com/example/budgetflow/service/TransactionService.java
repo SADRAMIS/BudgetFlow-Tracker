@@ -74,4 +74,8 @@ public class TransactionService {
         Double total = transactionRepository.sumAmountByUserIdAndType(userId,"EXPENSE");
         return total != null ? total : 0.0;
     }
+
+    public Double getUserBalance(Long userId){
+        return getTotalIncome(userId) - getTotalExpense(userId);
+    }
 }
