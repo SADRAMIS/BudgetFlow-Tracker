@@ -78,4 +78,23 @@ public class TransactionService {
     public Double getUserBalance(Long userId){
         return getTotalIncome(userId) - getTotalExpense(userId);
     }
+
+    public Transaction updateTransaction(Long transactionId,Long categoryId,
+                                         Double amount,String type,
+                                         String description,LocalDate date){
+        log.info("Обновление транзакции с ID: {}", transactionId);
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(()-> new IllegalArgumentException("Транзакция не найдена"));
+
+        Category category = categoryService.getCategoryById(categoryId);
+
+        transaction.setCategory(category);
+        transaction.setAmount(amount);
+        transaction.setType(type);
+        transaction.setDescription(description);
+        transaction.setDate(date);
+
+        return transactionRepository.save(transaction);
+    }
 }
