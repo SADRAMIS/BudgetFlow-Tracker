@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -45,5 +46,9 @@ public class TransactionService {
         transaction.setDate(date);
 
         return transactionRepository.save(transaction);
+    }
+
+    public List<Transaction> getUserTransaction(Long userId){
+        return transactionRepository.findByUserId(userId);
     }
 }
