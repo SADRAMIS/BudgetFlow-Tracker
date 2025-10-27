@@ -59,4 +59,9 @@ public class TransactionService {
     public List<Transaction> getUserTransactionsByDateRange(Long userId,LocalDate startDate,LocalDate endDate){
         return transactionRepository.findByUserIdAndDateBetween(userId,startDate,endDate);
     }
+
+    public List<Transaction> getMonthlyTransactions(Long userId,int year,int month){
+        log.info("Получение транзакций за {}/{} для пользователя {}", month, year, userId);
+        return transactionRepository.findByUserIdAndYearAndMonth(userId,year,month);
+    }
 }
