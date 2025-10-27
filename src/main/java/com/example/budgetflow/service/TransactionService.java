@@ -51,4 +51,8 @@ public class TransactionService {
     public List<Transaction> getUserTransaction(Long userId){
         return transactionRepository.findByUserId(userId);
     }
+
+    public List<Transaction> getUserTransactionsByType(Long userId,String type){
+        return transactionRepository.findByUserIdAndType(userId,type);
+    }
 }
