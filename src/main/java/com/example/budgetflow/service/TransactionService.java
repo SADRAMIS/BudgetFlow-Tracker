@@ -55,4 +55,8 @@ public class TransactionService {
     public List<Transaction> getUserTransactionsByType(Long userId,String type){
         return transactionRepository.findByUserIdAndType(userId,type);
     }
+
+    public List<Transaction> getUserTransactionsByDateRange(Long userId,LocalDate startDate,LocalDate endDate){
+        return transactionRepository.findByUserIdAndDateBetween(userId,startDate,endDate);
+    }
 }
