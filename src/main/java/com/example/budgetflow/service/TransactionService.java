@@ -64,4 +64,9 @@ public class TransactionService {
         log.info("Получение транзакций за {}/{} для пользователя {}", month, year, userId);
         return transactionRepository.findByUserIdAndYearAndMonth(userId,year,month);
     }
+
+    public Double getTotalIncome(Long userId){
+        Double total = transactionRepository.sumAmountByUserIdAndType(userId,"INCOME");
+        return total != null ? total : 0.0;
+    }
 }
