@@ -23,7 +23,7 @@ public class Category {
     private String name;
 
     @Column(nullable = false)
-    private String type;
+    private String type;  // INCOME, EXPENSE, ASSET, и т.д.
 
     private String icon; // иконка категории
     private String color; // цвет категории для UI
