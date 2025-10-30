@@ -1,7 +1,6 @@
 package com.example.budgetflow.entity;
 
 import jakarta.persistence.*;
-import jakarta.transaction.Transaction;
 import lombok.*;
 
 import java.util.List;
@@ -28,6 +27,6 @@ public class User {
     private String password;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Transaction> transaction;
+    private List<Transaction> transactions;
 
 }
