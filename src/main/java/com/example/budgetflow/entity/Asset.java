@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "assets")
+@Table(name = "assets") // активы портфеля
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,7 +15,7 @@ public class Asset {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String ticker;
+    private String ticker; // бирежевой тикер (уникальный торговый код)
     private String type; // "stock", "bond", "fund", "crypto", "cash"
     private String currency;
     @ManyToOne(fetch = FetchType.LAZY)
