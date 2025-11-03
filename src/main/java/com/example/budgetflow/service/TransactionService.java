@@ -30,7 +30,7 @@ public class TransactionService {
                                          String description, LocalDate date){
         log.info("Создание новой транзакции для пользователя с ID: {}", userId);
 
-        if(amount <= 0){
+        if(amount == null ||amount <= 0){
             throw  new IllegalArgumentException("Сумма должна быть положительной");
         }
 
