@@ -47,7 +47,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User getUserId(Long id){
+    public User getUserById(Long id){
         return userRepository.findById(id).
                 orElseThrow(()-> new IllegalArgumentException("Пользователь не найден с ID: " + id));
     }

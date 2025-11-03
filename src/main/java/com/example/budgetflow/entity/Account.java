@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "accounts")
 @Data
@@ -20,6 +22,12 @@ public class Account {
     private String type;
     @Column(nullable = false)
     private String currency;
+    @Column(nullable = false, unique = true)
+    private String accountNumber;
+    @Column
+    private String status;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal balance;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
