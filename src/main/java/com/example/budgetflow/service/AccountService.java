@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,11 @@ public class AccountService {
         account.setStatus("active");
         account.setBalance(BigDecimal.ZERO); // начальный остаток
         return accountRepository.save(account);
+    }
+
+    // Получить все счета пользователя
+    public List<Account> getAccountsByUser(Long userId){
+        return accountRepository.findByUserId(userId);
     }
 
 }
