@@ -57,4 +57,9 @@ public class AccountService {
         return accountRepository.save(account);
     }
 
+    public void deleteAccount(Long accountId){
+        log.info("Удаление счета с ID: {}", accountId);
+        accountRepository.deleteById(accountId);
+    }
+
 }
