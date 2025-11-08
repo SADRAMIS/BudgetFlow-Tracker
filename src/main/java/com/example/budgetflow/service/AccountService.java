@@ -46,4 +46,15 @@ public class AccountService {
                 .orElseThrow(()-> new IllegalArgumentException("Счет не найден с ID: " + id));
     }
 
+    public Account updateAccount(Long accountId,String name,String type,String currency,String status,BigDecimal balance){
+        Account account = getAccountById(accountId);
+        if (name != null) account.setName(name);
+        if (type != null) account.setType(type);
+        if (currency != null) account.setCurrency(currency);
+        if (status != null) account.setStatus(status);
+        if (balance != null) account.setBalance(balance);
+
+        return accountRepository.save(account);
+    }
+
 }
