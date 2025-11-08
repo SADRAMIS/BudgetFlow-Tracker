@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -23,7 +25,13 @@ public class AccountService {
         User user = userService.getUserById(userId);
         Account account = new Account();
         account.setUser(user);
-        account.set
+        account.setAccountNumber(accountNumber);
+        account.setName(name);
+        account.setType(type);
+        account.setCurrency(currency);
+        account.setStatus("active");
+        account.setBalance(BigDecimal.ZERO); // начальный остаток
+        return accountRepository.save(account);
     }
 
 }
