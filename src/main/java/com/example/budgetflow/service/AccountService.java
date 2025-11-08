@@ -40,4 +40,10 @@ public class AccountService {
         return accountRepository.findByUserId(userId);
     }
 
+    // Получить счет по id
+    public Account getAccountById(Long id){
+        return accountRepository.findById(id)
+                .orElseThrow(()-> new IllegalArgumentException("Счет не найден с ID: " + id));
+    }
+
 }
