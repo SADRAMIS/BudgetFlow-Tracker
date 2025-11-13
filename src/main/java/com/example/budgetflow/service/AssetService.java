@@ -38,4 +38,14 @@ public class AssetService {
         asset.setQuantity(quantity);
         return assetRepository.save(asset);
     }
+
+    public Asset updateAsset(Long assetId,String name,String ticker,String type,String currency,Double quantity){
+        Asset asset = getAssetById(assetId);
+        if (name != null) asset.setName(name);
+        if (ticker != null) asset.setTicker(ticker);
+        if (type != null) asset.setType(type);
+        if (currency != null) asset.setCurrency(currency);
+        if (quantity != null) asset.setQuantity(quantity);
+        return assetRepository.save(asset);
+    }
 }
