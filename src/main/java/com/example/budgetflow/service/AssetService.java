@@ -20,4 +20,9 @@ public class AssetService {
     public List<Asset> getAssetsByAccount(Long accountId){
         return assetRepository.findByAccountId(accountId);
     }
+
+    public Asset getAssetById(Long assetId){
+        return assetRepository.findById(assetId)
+                .orElseThrow(()-> new IllegalArgumentException("Актив не найден с ID: " + assetId));
+    }
 }
