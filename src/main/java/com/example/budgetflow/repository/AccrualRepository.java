@@ -11,6 +11,6 @@ import java.util.List;
 public interface AccrualRepository extends JpaRepository<Accrual,Long> {
 
     List<Accrual> findByAssetId(Long assetId);
-    List<Accrual> findByType(String type);
-    List<Accrual> findByDateBetween(LocalDate startDate,LocalDate endDate);
+    List<Accrual> findByAssetIdAndType(Long assetId, String type);
+    List<Accrual> findByAssetIdAndDateBetween(Long assetId, LocalDate start, LocalDate end);
 }
