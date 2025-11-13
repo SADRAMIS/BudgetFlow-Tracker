@@ -48,4 +48,9 @@ public class AssetService {
         if (quantity != null) asset.setQuantity(quantity);
         return assetRepository.save(asset);
     }
+
+    public void deleteAccount(Long assetId){
+        log.info("Удаление актива с ID: {}", assetId);
+        assetRepository.deleteById(assetId);
+    }
 }
