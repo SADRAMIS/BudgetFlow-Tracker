@@ -1,5 +1,6 @@
 package com.example.budgetflow.service;
 
+import com.example.budgetflow.entity.Account;
 import com.example.budgetflow.entity.Asset;
 import com.example.budgetflow.repository.AssetRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,17 @@ public class AssetService {
     public Asset getAssetById(Long assetId){
         return assetRepository.findById(assetId)
                 .orElseThrow(()-> new IllegalArgumentException("Актив не найден с ID: " + assetId));
+    }
+
+    public Asset createAsset(Long accountId,String name,String ticker,String type,String currency,Double quantity){
+        Account account = accountService.getAccountById(accountId);
+        Asset asset = new Asset();
+        asset.setAccount(account);
+        asset.setName(name);
+        asset.setTicker(ticker);
+        asset.setType(type);
+        asset.setCurrency(currency);
+        asset.setQuantity(quantity);
+        return assetRepository.save(asset);
     }
 }
