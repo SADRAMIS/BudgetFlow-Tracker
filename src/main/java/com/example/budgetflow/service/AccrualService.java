@@ -19,4 +19,8 @@ public class AccrualService {
     public List<Accrual> getAccrualsByAsset(Long assetId){
         return accrualRepository.findByAssetId(assetId);
     }
+
+    public List<Accrual> getAccrualsByAssetAndType(Long assetId,String type){
+        return accrualRepository.findByAssetIdAndType(assetId,type);
+    }
 }
