@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -22,5 +23,9 @@ public class AccrualService {
 
     public List<Accrual> getAccrualsByAssetAndType(Long assetId,String type){
         return accrualRepository.findByAssetIdAndType(assetId,type);
+    }
+
+    public List<Accrual> getAccrualsByAssetAndDateRange(Long assetId, LocalDate start,LocalDate end){
+        return accrualRepository.findByAssetIdAndDateBetween(assetId,start,end);
     }
 }
