@@ -5,6 +5,7 @@ import com.example.budgetflow.entity.Accrual;
 import com.example.budgetflow.entity.Asset;
 import com.example.budgetflow.entity.Transaction;
 import com.example.budgetflow.service.AccountService;
+import com.example.budgetflow.service.AccrualService;
 import com.example.budgetflow.service.AssetService;
 import com.example.budgetflow.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class ReportController {
     private final TransactionService transactionService;
     private final AccountService accountService;
     private final AssetService assetService;
+    private final AccrualService accrualService;
 
 
     @GetMapping("/balance/{userId}")
