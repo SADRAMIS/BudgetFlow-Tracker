@@ -405,9 +405,11 @@ async function handleTinkoff(e) {
     e.preventDefault();
     const payload = Object.fromEntries(new FormData(e.currentTarget));
     try {
-        await api.syncTinkoff(payload);
-        selectors.tinkoffResult.textContent = 'Запрос отправлен, проверяйте уведомления.';
-        toast('Синхронизация запущена');
+        const response = await api.syncTinkoff(payload);
+        const ops = response?.summary?.estimatedOps;
+        const summary = ops ? `~${ops} операций` : '';
+        selectors.tinkoffResult.textContent = `${response.message}. Режим: ${response.mode}. ${summary}`;
+        toast(response.message);
     } catch (err) {
         selectors.tinkoffResult.textContent = err.message;
         toast(err.message, 'error');
