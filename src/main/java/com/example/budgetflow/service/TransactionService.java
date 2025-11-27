@@ -3,7 +3,9 @@ package com.example.budgetflow.service;
 import com.example.budgetflow.entity.Category;
 import com.example.budgetflow.entity.Transaction;
 import com.example.budgetflow.entity.User;
+import com.example.budgetflow.repository.CategoryRepository;
 import com.example.budgetflow.repository.TransactionRepository;
+import com.example.budgetflow.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +34,7 @@ public class TransactionService {
             throw  new IllegalArgumentException("Сумма должна быть положительной");
         }
 
-        User user = userService.getUserById(userId);
+        User user = userService.getUserId(userId);
         Category category = categoryService.getCategoryById(categoryId);
 
         Transaction transaction = new Transaction();

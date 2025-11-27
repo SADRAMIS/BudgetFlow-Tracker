@@ -1,45 +1,45 @@
 const toast = (() => {
     let timer;
-    const node = document.getElementById('toast');
+    const el = document.getElementById('toast');
     return (message, variant = 'info') => {
-        node.textContent = message;
-        node.dataset.variant = variant;
-        node.classList.add('visible');
+        el.textContent = message;
+        el.dataset.variant = variant;
+        el.classList.add('visible');
         clearTimeout(timer);
-        timer = setTimeout(() => node.classList.remove('visible'), 3500);
+        timer = setTimeout(() => el.classList.remove('visible'), 3000);
     };
 })();
 
 const state = {
     userId: null,
-    currencyTotals: {},
+    structure: {},
+    dividends: [],
+    targets: {
+        STOCKS: 0.6,
+        BONDS: 0.3,
+        CASH: 0.1,
+    },
 };
 
 const api = {
-    async registerUser(data) {
+    async registerUser(payload) {
         const res = await fetch('/api/users/register', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Не удалось зарегистрировать пользователя');
+        if (!res.ok) throw new Error('Не удалось создать пользователя');
         return res.json();
     },
     async getBalance(userId) {
-        const res = await fetch(`/api/reports/balance/${userId}`);
-        if (!res.ok) throw new Error('Баланс недоступен');
-        return res.json();
+        return fetch(`/api/reports/balance/${userId}`).then(checkJson('Баланс недоступен'));
     },
-    async getMonthlyTransactions(userId, year, month) {
+    async getMonthly(userId, year, month) {
         const params = new URLSearchParams({year, month});
-        const res = await fetch(`/api/reports/monthly/${userId}?${params}`);
-        if (!res.ok) throw new Error('Нет данных по месяцу');
-        return res.json();
+        return fetch(`/api/reports/monthly/${userId}?${params}`).then(checkJson('Нет данных за месяц'));
     },
     async getTransactions(userId) {
-        const res = await fetch(`/api/transaction/user/${userId}`);
-        if (!res.ok) throw new Error('Не удалось получить транзакции');
-        return res.json();
+        return fetch(`/api/transaction/user/${userId}`).then(checkJson('Нет транзакций'));
     },
     async createTransaction(payload) {
         const res = await fetch('/api/transaction', {
@@ -51,9 +51,7 @@ const api = {
         return res.json();
     },
     async getCategories() {
-        const res = await fetch('/api/categories');
-        if (!res.ok) throw new Error('Не удалось получить категории');
-        return res.json();
+        return fetch('/api/categories').then(checkJson('Не удалось получить категории'));
     },
     async createCategory(payload) {
         const res = await fetch('/api/categories', {
@@ -65,42 +63,64 @@ const api = {
         return res.json();
     },
     async getStructure(userId) {
-        const res = await fetch(`/api/reports/structure/${userId}`);
-        if (!res.ok) throw new Error('Структура портфеля недоступна');
-        return res.json();
+        return fetch(`/api/reports/structure/${userId}`).then(checkJson('Структура недоступна'));
     },
     async getAssets(userId) {
-        const res = await fetch(`/api/reports/assets/${userId}`);
-        if (!res.ok) throw new Error('Нет данных по активам');
-        return res.json();
+        return fetch(`/api/reports/assets/${userId}`).then(checkJson('Активы недоступны'));
     },
     async getDividends(userId) {
-        const res = await fetch(`/api/reports/dividends/${userId}`);
-        if (!res.ok) throw new Error('Нет данных по дивидендам');
+        return fetch(`/api/reports/dividends/${userId}`).then(checkJson('Нет дивидендов'));
+    },
+    async syncTinkoff(payload) {
+        const res = await fetch('/api/integrations/tinkoff/sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error('API Т‑Инвестиций недоступно');
         return res.json();
     },
 };
 
+function checkJson(errorMessage) {
+    return async res => {
+        if (!res.ok) throw new Error(errorMessage);
+        return res.json();
+    };
+}
+
+const sel = id => document.getElementById(id);
 const selectors = {
-    balance: document.getElementById('balanceValue'),
-    monthly: document.getElementById('monthlySpending'),
-    assetsCount: document.getElementById('assetsCount'),
-    transactions: document.getElementById('transactionsList'),
-    categories: document.getElementById('categoriesList'),
-    structure: document.getElementById('structureList'),
-    assetsByCurrency: document.getElementById('assetsByCurrency'),
-    dividends: document.getElementById('dividendsList'),
-    registerResult: document.getElementById('registerResult'),
-    yearInput: document.getElementById('filterYear'),
-    monthInput: document.getElementById('filterMonth'),
+    balance: sel('balanceValue'),
+    monthly: sel('monthlySpending'),
+    assetsCount: sel('assetsCount'),
+    expectedDividends: sel('expectedDividends'),
+    transactions: sel('transactionsList'),
+    categories: sel('categoriesList'),
+    structure: sel('structureList'),
+    assetsByCurrency: sel('assetsByCurrency'),
+    dividends: sel('dividendsList'),
+    rebalance: sel('rebalanceList'),
+    registerResult: sel('registerResult'),
+    tinkoffResult: sel('tinkoffResult'),
 };
 
-function formatMoney(value) {
+function ensureUserId() {
+    if (!state.userId) throw new Error('Сначала загрузите пользователя');
+    return state.userId;
+}
+
+function formatMoney(value, currency = 'RUB') {
     if (value === null || value === undefined) return '—';
-    return new Intl.NumberFormat('ru-RU', {style: 'currency', currency: 'RUB', maximumFractionDigits: 0}).format(value);
+    return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 0,
+    }).format(value);
 }
 
 function formatDate(date) {
+    if (!date) return '—';
     return new Date(date).toLocaleString('ru-RU', {
         day: '2-digit',
         month: 'short',
@@ -109,22 +129,15 @@ function formatDate(date) {
     });
 }
 
-function ensureUserId() {
-    if (!state.userId) throw new Error('Сначала выбери пользователя');
-    return state.userId;
-}
-
 async function handleRegister(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     try {
         const user = await api.registerUser(data);
-        selectors.registerResult.textContent = `Новый пользователь #${user.id}`;
-        selectors.registerResult.classList.remove('error');
-        toast('Пользователь создан');
+        selectors.registerResult.textContent = `Создан пользователь #${user.id}`;
+        toast('Пользователь зарегистрирован');
     } catch (err) {
         selectors.registerResult.textContent = err.message;
-        selectors.registerResult.classList.add('error');
         toast(err.message, 'error');
     }
 }
@@ -132,10 +145,8 @@ async function handleRegister(e) {
 async function handleCategory(e) {
     e.preventDefault();
     try {
-        ensureUserId();
-        const payload = Object.fromEntries(new FormData(e.currentTarget));
-        await api.createCategory(payload);
-        toast('Категория добавлена');
+        await api.createCategory(Object.fromEntries(new FormData(e.currentTarget)));
+        toast('Категория сохранена');
         e.currentTarget.reset();
         loadCategories();
     } catch (err) {
@@ -147,30 +158,46 @@ async function handleTransaction(e) {
     e.preventDefault();
     try {
         const userId = ensureUserId();
-        const payload = Object.fromEntries(new FormData(e.currentTarget));
-        const body = {
-            amount: parseFloat(payload.amount),
-            type: payload.type,
-            description: payload.description,
-            date: payload.date,
-            category: {id: Number(payload.categoryId)},
+        const data = Object.fromEntries(new FormData(e.currentTarget));
+        const payload = {
+            amount: Number(data.amount),
+            type: data.type,
+            description: data.description,
+            date: data.date,
+            category: {id: Number(data.categoryId)},
             user: {id: Number(userId)},
         };
-        await api.createTransaction(body);
-        toast('Транзакция сохранена');
+        await api.createTransaction(payload);
+        toast('Транзакция добавлена');
         e.currentTarget.reset();
-        loadTransactions();
-        loadBalance();
-        loadMonthly();
+        await Promise.all([loadTransactions(), loadBalance(), loadMonthly()]);
     } catch (err) {
         toast(err.message, 'error');
     }
 }
 
+async function handleUserSelect(e) {
+    e.preventDefault();
+    const input = sel('userIdInput');
+    const value = Number(input.value);
+    if (!value) {
+        toast('Введите корректный ID');
+        return;
+    }
+    state.userId = value;
+    hydrate();
+}
+
+function handleDemo() {
+    sel('userIdInput').value = 1;
+    state.userId = 1;
+    hydrate();
+}
+
 async function loadBalance() {
     try {
-        const balance = await api.getBalance(ensureUserId());
-        selectors.balance.textContent = formatMoney(balance);
+        const value = await api.getBalance(ensureUserId());
+        selectors.balance.textContent = formatMoney(value);
     } catch (err) {
         selectors.balance.textContent = '—';
         toast(err.message, 'error');
@@ -179,12 +206,9 @@ async function loadBalance() {
 
 async function loadMonthly() {
     try {
-        const userId = ensureUserId();
-        const year = selectors.yearInput.value || new Date().getFullYear();
-        const month = selectors.monthInput.value || new Date().getMonth() + 1;
-        const data = await api.getMonthlyTransactions(userId, year, month);
-        const expenses = data
-            .filter(tx => tx.type === 'EXPENSE')
+        const now = new Date();
+        const data = await api.getMonthly(ensureUserId(), now.getFullYear(), now.getMonth() + 1);
+        const expenses = data.filter(tx => tx.type === 'EXPENSE')
             .reduce((sum, tx) => sum + (tx.amount || 0), 0);
         selectors.monthly.textContent = formatMoney(expenses);
     } catch (err) {
@@ -200,18 +224,17 @@ async function loadTransactions() {
     try {
         const list = await api.getTransactions(ensureUserId());
         if (!list.length) {
-            node.textContent = 'Транзакций пока нет';
+            node.textContent = 'Нет транзакций';
             node.classList.add('empty');
             return;
         }
-        list
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 8)
+        list.sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 10)
             .forEach(tx => {
                 const div = document.createElement('div');
                 div.className = 'event';
                 div.innerHTML = `
-                    <span class="pill ${tx.type === 'EXPENSE' ? 'expense' : 'income'}">${tx.type === 'EXPENSE' ? 'Расход' : 'Доход'}</span>
+                    <span class="pill ${tx.type === 'EXPENSE' ? 'expense' : 'income'}">${tx.type}</span>
                     <div>
                         <strong>${tx.description || 'Без описания'}</strong>
                         <p>${tx.category?.name || 'Категория неизвестна'}</p>
@@ -237,16 +260,16 @@ async function loadCategories() {
     try {
         const categories = await api.getCategories();
         if (!categories.length) {
-            node.textContent = 'Нет созданных категорий';
+            node.textContent = 'Нет категорий';
             node.classList.add('empty');
             return;
         }
         categories.forEach(cat => {
-            const badge = document.createElement('span');
-            badge.className = 'badge';
-            badge.style.borderColor = cat.color || 'rgba(148,163,184,0.3)';
-            badge.innerHTML = `${cat.icon || '🏷️'} ${cat.name}`;
-            node.appendChild(badge);
+            const span = document.createElement('span');
+            span.className = 'badge';
+            span.style.borderColor = cat.color || 'rgba(148,163,184,0.4)';
+            span.textContent = `${cat.icon || '🏷️'} ${cat.name}`;
+            node.appendChild(span);
         });
     } catch (err) {
         node.textContent = err.message;
@@ -261,10 +284,13 @@ async function loadStructure() {
     node.classList.remove('empty');
     try {
         const data = await api.getStructure(ensureUserId());
+        state.structure = data;
         const entries = Object.entries(data);
         if (!entries.length) {
             node.textContent = 'Портфель пуст';
             node.classList.add('empty');
+            selectors.rebalance.classList.add('empty');
+            selectors.rebalance.textContent = 'Недостаточно данных';
             return;
         }
         entries.forEach(([type, qty]) => {
@@ -272,9 +298,12 @@ async function loadStructure() {
             li.innerHTML = `<span>${type}</span><strong>${qty?.toFixed(2)}</strong>`;
             node.appendChild(li);
         });
+        renderRebalance();
     } catch (err) {
         node.textContent = err.message;
         node.classList.add('empty');
+        selectors.rebalance.textContent = 'Недостаточно данных';
+        selectors.rebalance.classList.add('empty');
         toast(err.message, 'error');
     }
 }
@@ -286,7 +315,7 @@ async function loadAssets() {
     try {
         const map = await api.getAssets(ensureUserId());
         const entries = Object.entries(map);
-        selectors.assetsCount.textContent = entries.reduce((sum, [, assets]) => sum + assets.length, 0);
+        selectors.assetsCount.textContent = entries.reduce((sum, [, list]) => sum + list.length, 0);
         if (!entries.length) {
             node.textContent = 'Активы не найдены';
             node.classList.add('empty');
@@ -306,9 +335,9 @@ async function loadAssets() {
             node.appendChild(card);
         });
     } catch (err) {
-        selectors.assetsCount.textContent = '—';
         node.textContent = err.message;
         node.classList.add('empty');
+        selectors.assetsCount.textContent = '—';
         toast(err.message, 'error');
     }
 }
@@ -319,58 +348,101 @@ async function loadDividends() {
     node.classList.remove('empty');
     try {
         const list = await api.getDividends(ensureUserId());
+        state.dividends = list;
         if (!list.length) {
             node.textContent = 'Начислений пока нет';
             node.classList.add('empty');
+            selectors.expectedDividends.textContent = '—';
             return;
         }
+        const total = list.reduce((sum, accrual) => sum + (accrual.amount || 0), 0);
+        selectors.expectedDividends.textContent = formatMoney(total);
         list.slice(0, 6).forEach(acc => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>${acc.asset?.ticker || '—'}</span><strong>${acc.amount ?? 0}</strong>`;
+            li.innerHTML = `
+                <span>${acc.asset?.ticker || acc.asset?.name || '—'}</span>
+                <strong>${acc.amount ?? 0}</strong>
+            `;
             node.appendChild(li);
         });
     } catch (err) {
         node.textContent = err.message;
         node.classList.add('empty');
+        selectors.expectedDividends.textContent = '—';
         toast(err.message, 'error');
     }
 }
 
-async function hydrateDashboard() {
+function renderRebalance() {
+    const node = selectors.rebalance;
+    node.innerHTML = '';
+    node.classList.remove('empty');
+    const entries = Object.entries(state.targets);
+    const total = Object.values(state.structure).reduce((sum, val) => sum + (val || 0), 0);
+    if (!total) {
+        node.textContent = 'Недостаточно данных';
+        node.classList.add('empty');
+        return;
+    }
+    entries.forEach(([type, targetShare]) => {
+        const current = state.structure[type] || 0;
+        const currentShare = total ? current / total : 0;
+        const delta = ((targetShare - currentShare) * 100).toFixed(1);
+        const div = document.createElement('div');
+        div.className = 'rebalance-item';
+        div.innerHTML = `
+            <div>
+                <strong>${type}</strong>
+                <p class="hint">Текущая доля: ${(currentShare * 100).toFixed(1)}%</p>
+            </div>
+            <span class="delta ${delta >= 0 ? 'positive' : 'negative'}">${delta}%</span>
+        `;
+        node.appendChild(div);
+    });
+}
+
+async function handleTinkoff(e) {
+    e.preventDefault();
+    const payload = Object.fromEntries(new FormData(e.currentTarget));
     try {
-        await Promise.all([
-            loadBalance(),
-            loadMonthly(),
-            loadTransactions(),
-            loadCategories(),
-            loadStructure(),
-            loadAssets(),
-            loadDividends(),
-        ]);
-        toast('Данные обновлены');
+        await api.syncTinkoff(payload);
+        selectors.tinkoffResult.textContent = 'Запрос отправлен, проверяйте уведомления.';
+        toast('Синхронизация запущена');
     } catch (err) {
+        selectors.tinkoffResult.textContent = err.message;
         toast(err.message, 'error');
     }
+}
+
+async function hydrate() {
+    toast('Загружаем данные…');
+    await Promise.all([
+        loadBalance(),
+        loadMonthly(),
+        loadTransactions(),
+        loadCategories(),
+        loadStructure(),
+        loadAssets(),
+        loadDividends(),
+    ]);
+    toast('Данные обновлены');
 }
 
 function init() {
-    document.getElementById('loadUserBtn').addEventListener('click', () => {
-        const input = document.getElementById('userIdInput');
-        const id = Number(input.value);
-        if (!id) {
-            toast('Введите корректный ID');
-            return;
-        }
-        state.userId = id;
-        hydrateDashboard();
-    });
-
+    document.getElementById('userPicker').addEventListener('submit', handleUserSelect);
+    document.getElementById('demoBtn').addEventListener('click', handleDemo);
     document.getElementById('registerForm').addEventListener('submit', handleRegister);
     document.getElementById('categoryForm').addEventListener('submit', handleCategory);
     document.getElementById('transactionForm').addEventListener('submit', handleTransaction);
-    document.getElementById('refreshMonthly').addEventListener('click', e => {
+    document.getElementById('refreshPortfolio').addEventListener('click', e => {
         e.preventDefault();
-        loadMonthly();
+        loadStructure();
+        loadAssets();
+    });
+    document.getElementById('tinkoffForm').addEventListener('submit', handleTinkoff);
+    document.getElementById('syncTinkoff').addEventListener('click', e => {
+        e.preventDefault();
+        document.getElementById('tinkoffForm').dispatchEvent(new Event('submit', {cancelable: true}));
     });
 }
 

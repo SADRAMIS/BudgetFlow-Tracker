@@ -3,163 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BudgetFlow Tracker</title>
+    <title>BudgetFlow | Snowball-стиль портфель</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="app-shell">
+<div class="shell">
     <header class="hero">
-        <div>
-            <p class="eyebrow">BudgetFlow</p>
-            <h1>Управляй финансами осознанно</h1>
-            <p class="subtitle">
-                Живой дашборд поверх REST API: баланс, транзакции, активы и дивиденды в едином окне.
-                Просто укажи ID пользователя, и мы подтянем данные с бэкенда.
+        <div class="hero__content">
+            <div class="brand">BudgetFlow<span>α</span></div>
+            <h1>Твой личный Snowball: активы, дивиденды, интеграции</h1>
+            <p class="hero__subtitle">
+                Подключи счёт Т‑Инвестиций, получи калькулятор доходности, календарь дивидендов и живой мониторинг портфеля.
+                Вводи ID пользователя и мы подтянем данные из REST API.
             </p>
-            <div class="hero-actions">
-                <label class="input-chip">
+            <form class="hero__controls" id="userPicker">
+                <label>
                     <span>ID пользователя</span>
-                    <input id="userIdInput" type="number" min="1" placeholder="Например, 1">
+                    <input type="number" id="userIdInput" placeholder="Например, 1" min="1">
                 </label>
-                <button id="loadUserBtn" class="btn primary">Загрузить дашборд</button>
+                <button type="submit" class="btn primary">Загрузить</button>
+                <button type="button" id="demoBtn" class="btn ghost">Демо</button>
+            </form>
+            <div class="hero__chips">
+                <span class="chip">XIRR</span>
+                <span class="chip">Дивиденды</span>
+                <span class="chip">Структура портфеля</span>
+                <span class="chip">Ребаланс</span>
             </div>
-            <p class="hint">Нет аккаунта? Зарегистрируйся в блоке ниже и используй полученный ID.</p>
         </div>
-        <div class="hero-card">
-            <div class="hero-metric">
-                <span>Текущий баланс</span>
+        <div class="summary-grid" id="summaryGrid">
+            <article class="summary-card">
+                <p>Баланс</p>
                 <strong id="balanceValue">—</strong>
-            </div>
-            <div class="hero-metric">
-                <span>Расходы за месяц</span>
+            </article>
+            <article class="summary-card">
+                <p>Расходы в этом месяце</p>
                 <strong id="monthlySpending">—</strong>
-            </div>
-            <div class="hero-metric">
-                <span>Активы в портфеле</span>
+            </article>
+                <article class="summary-card">
+                <p>Активы в портфеле</p>
                 <strong id="assetsCount">—</strong>
-            </div>
+            </article>
+            <article class="summary-card">
+                <p>Ожидание дивидендов</p>
+                <strong id="expectedDividends">—</strong>
+            </article>
         </div>
     </header>
 
-    <main>
-        <section class="panel-grid">
-            <article class="panel">
-                <header>
-                    <h2>Регистрация пользователя</h2>
-                    <p>Создай нового пользователя, чтобы тестировать API.</p>
-                </header>
-                <form id="registerForm" class="form-grid">
-                    <label>
-                        <span>Имя пользователя</span>
-                        <input type="text" name="username" placeholder="budgeter" required>
-                    </label>
-                    <label>
-                        <span>Email</span>
-                        <input type="email" name="email" placeholder="you@mail.com" required>
-                    </label>
-                    <label class="full">
-                        <span>Пароль</span>
-                        <input type="password" name="password" placeholder="••••••" required>
-                    </label>
+    <main class="grid">
+        <section class="panel span-2">
+            <header>
+                <div>
+                    <h2>Быстрый старт</h2>
+                    <p>Регистрация, категории и транзакции в одном месте</p>
+                </div>
+            </header>
+            <div class="split">
+                <form id="registerForm" class="form-card">
+                    <h3>Регистрация</h3>
+                    <label>Имя<input name="username" required placeholder="investor"/></label>
+                    <label>Email<input name="email" type="email" required placeholder="you@mail.com"/></label>
+                    <label>Пароль<input name="password" type="password" required/></label>
                     <button class="btn primary full">Создать</button>
+                    <p class="hint" id="registerResult"></p>
                 </form>
-                <p class="hint" id="registerResult"></p>
-            </article>
-
-            <article class="panel">
-                <header class="panel-header">
-                    <div>
-                        <h2>Быстрые действия</h2>
-                        <p>Добавь категорию или транзакцию сразу после загрузки пользователя.</p>
-                    </div>
-                    <div class="filter-group">
-                        <label>
-                            <span>Год</span>
-                            <input id="filterYear" type="number" min="2000" max="2100">
-                        </label>
-                        <label>
-                            <span>Месяц</span>
-                            <input id="filterMonth" type="number" min="1" max="12">
-                        </label>
-                        <button id="refreshMonthly" class="btn ghost">Обновить</button>
-                    </div>
-                </header>
-                <div class="actions">
-                    <form id="categoryForm" class="inline-form">
-                        <input type="text" name="name" placeholder="Название категории" required>
-                        <select name="type" required>
-                            <option value="EXPENSE">Расход</option>
-                            <option value="INCOME">Доход</option>
-                        </select>
-                        <input type="text" name="icon" placeholder="Иконка (emoji / class)">
-                        <input type="color" name="color" value="#6366f1">
-                        <button class="btn secondary">Категория</button>
+                <div class="stack">
+                    <form id="categoryForm" class="form-card compact">
+                        <h3>Новая категория</h3>
+                        <div class="grid-2">
+                            <input name="name" placeholder="Название" required>
+                            <select name="type" required>
+                                <option value="EXPENSE">Расход</option>
+                                <option value="INCOME">Доход</option>
+                            </select>
+                            <input name="icon" placeholder="Иконка или emoji">
+                            <input name="color" type="color" value="#7c3aed">
+                        </div>
+                        <button class="btn secondary full">Сохранить категорию</button>
                     </form>
-
-                    <form id="transactionForm" class="inline-form">
-                        <input type="number" step="0.01" name="amount" placeholder="Сумма" required>
-                        <select name="type" required>
-                            <option value="EXPENSE">Расход</option>
-                            <option value="INCOME">Доход</option>
-                        </select>
-                        <input type="text" name="description" placeholder="Описание">
-                        <input type="datetime-local" name="date" required>
-                        <input type="number" name="categoryId" placeholder="ID категории" required>
-                        <button class="btn primary">Транзакция</button>
+                    <form id="transactionForm" class="form-card compact">
+                        <h3>Быстрая транзакция</h3>
+                        <div class="grid-3">
+                            <input name="amount" type="number" step="0.01" required placeholder="Сумма">
+                            <select name="type" required>
+                                <option value="EXPENSE">Расход</option>
+                                <option value="INCOME">Доход</option>
+                            </select>
+                            <input name="categoryId" type="number" placeholder="ID категории" required>
+                            <input name="description" placeholder="Описание">
+                            <input name="date" type="datetime-local" required>
+                        </div>
+                        <button class="btn primary full">Добавить</button>
                     </form>
                 </div>
-            </article>
+            </div>
         </section>
 
-        <section class="panel-grid wide">
-            <article class="panel stretch">
-                <header>
-                    <h2>Лента транзакций</h2>
-                    <p>Последние операции пользователя</p>
-                </header>
-                <div id="transactionsList" class="timeline empty">Данные не загружены</div>
-            </article>
-            <article class="panel stretch">
-                <header>
-                    <h2>Категории</h2>
-                    <p>Цветовые теги для быстрого анализа бюджета</p>
-                </header>
-                <div id="categoriesList" class="badge-grid empty">Данные не загружены</div>
-            </article>
+        <section class="panel">
+            <header>
+                <h2>Транзакции</h2>
+                <p>Последние движения по счёту</p>
+            </header>
+            <div id="transactionsList" class="timeline empty">Загружается…</div>
         </section>
 
-        <section class="panel-grid wide">
-            <article class="panel stretch">
-                <header>
-                    <h2>Портфель</h2>
-                    <p>Распределение активов и валют</p>
-                </header>
-                <div class="dual-grid">
-                    <div>
-                        <h3>По типам</h3>
-                        <ul id="structureList" class="stat-list empty">Данные не загружены</ul>
-                    </div>
-                    <div>
-                        <h3>По валютам</h3>
-                        <div id="assetsByCurrency" class="currency-grid empty">Данные не загружены</div>
-                    </div>
+        <section class="panel">
+            <header>
+                <h2>Категории</h2>
+                <p>Фокус расходов и доходов</p>
+            </header>
+            <div id="categoriesList" class="badges empty">Загружается…</div>
+        </section>
+
+        <section class="panel span-2">
+            <header class="panel-header">
+                <div>
+                    <h2>Портфель как у Snowball</h2>
+                    <p>Структура по типам + сплит по валютам</p>
                 </div>
-            </article>
-            <article class="panel stretch">
-                <header>
-                    <h2>Дивиденды</h2>
-                    <p>Все начисления по активам</p>
-                </header>
-                <ul id="dividendsList" class="stat-list empty">Данные не загружены</ul>
-            </article>
+                <button class="btn ghost" id="refreshPortfolio">Обновить</button>
+            </header>
+            <div class="portfolio-grid">
+                <div>
+                    <h3>Типы активов</h3>
+                    <ul id="structureList" class="stat-list empty"></ul>
+                </div>
+                <div>
+                    <h3>Активы по валютам</h3>
+                    <div id="assetsByCurrency" class="currency-grid empty"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <header>
+                <h2>Дивиденды и купоны</h2>
+                <p>Отслеживай пассивный доход</p>
+            </header>
+            <ul id="dividendsList" class="stat-list empty">Загружается…</ul>
+        </section>
+
+        <section class="panel">
+            <header>
+                <h2>Рекомендации по ребалансу</h2>
+                <p>Сравнение с целевой моделью 60/30/10</p>
+            </header>
+            <div id="rebalanceList" class="rebalance-list empty">Нет данных</div>
+        </section>
+
+        <section class="panel span-2">
+            <header class="panel-header">
+                <div>
+                    <h2>Интеграция с Т‑Инвестициями</h2>
+                    <p>Синхронизируй сделки автоматически</p>
+                </div>
+                <button id="syncTinkoff" class="btn primary">Синхронизировать</button>
+            </header>
+            <form id="tinkoffForm" class="form-card">
+                <label>API токен
+                    <input name="token" placeholder="t.your-token..." required>
+                </label>
+                <label>Брокерский аккаунт (опционально)
+                    <input name="accountId" placeholder="1234567890">
+                </label>
+                <label>Режим
+                    <select name="mode">
+                        <option value="HISTORY">История сделок</option>
+                        <option value="POSITIONS">Текущие позиции</option>
+                        <option value="DIVIDENDS">Дивиденды</option>
+                    </select>
+                </label>
+                <button class="btn secondary full">Отправить</button>
+                <p class="hint" id="tinkoffResult">Мы никогда не сохраняем токен открытым текстом.</p>
+            </form>
         </section>
     </main>
+
+    <footer>
+        <p>BudgetFlow Tracker · Snowball inspired dashboard · 2025</p>
+    </footer>
 </div>
 
-<div id="toast" class="toast" role="status"></div>
+<div id="toast" class="toast"></div>
 <script src="app.js" defer></script>
 </body>
 </html>
