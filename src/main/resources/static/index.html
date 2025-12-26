@@ -158,28 +158,72 @@
         <section class="panel span-2">
             <header class="panel-header">
                 <div>
-                    <h2>Интеграция с Т‑Инвестициями</h2>
-                    <p>Синхронизируй сделки автоматически</p>
+                    <h2>Аналитика портфеля</h2>
+                    <p>Доходность, Sharpe Ratio, структура и рекомендации</p>
                 </div>
-                <button id="syncTinkoff" class="btn primary">Синхронизировать</button>
+                <button id="refreshAnalytics" class="btn primary">Обновить</button>
             </header>
-            <form id="tinkoffForm" class="form-card">
-                <label>API токен
-                    <input name="token" placeholder="t.your-token..." required>
-                </label>
-                <label>Брокерский аккаунт (опционально)
-                    <input name="accountId" placeholder="1234567890">
-                </label>
-                <label>Режим
-                    <select name="mode">
-                        <option value="HISTORY">История сделок</option>
-                        <option value="POSITIONS">Текущие позиции</option>
-                        <option value="DIVIDENDS">Дивиденды</option>
-                    </select>
-                </label>
-                <button class="btn secondary full">Отправить</button>
-                <p class="hint" id="tinkoffResult">Мы никогда не сохраняем токен открытым текстом.</p>
-            </form>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Общая стоимость</h3>
+                    <strong id="totalValue">—</strong>
+                </div>
+                <div class="analytics-card">
+                    <h3>Средняя цена входа</h3>
+                    <strong id="totalCost">—</strong>
+                </div>
+                <div class="analytics-card">
+                    <h3>Доходность</h3>
+                    <strong id="totalReturn">—</strong>
+                </div>
+                <div class="analytics-card">
+                    <h3>Коэффициент Шарпа</h3>
+                    <strong id="sharpeRatio">—</strong>
+                </div>
+            </div>
+            <div id="portfolioStructure" class="portfolio-structure"></div>
+            <div id="dividendCalendar" class="dividend-calendar"></div>
+        </section>
+
+        <section class="panel span-2">
+            <header class="panel-header">
+                <div>
+                    <h2>Интеграция с Т‑Инвестициями</h2>
+                    <p>Синхронизируй сделки автоматически или загрузи файл</p>
+                </div>
+            </header>
+            <div class="split">
+                <form id="tinkoffForm" class="form-card">
+                    <h3>API синхронизация</h3>
+                    <label>API токен
+                        <input name="token" placeholder="t.your-token..." required>
+                    </label>
+                    <label>Брокерский аккаунт (опционально)
+                        <input name="accountId" placeholder="1234567890">
+                    </label>
+                    <label>Режим
+                        <select name="mode">
+                            <option value="ALL">Всё</option>
+                            <option value="HISTORY">История сделок</option>
+                            <option value="POSITIONS">Текущие позиции</option>
+                            <option value="DIVIDENDS">Дивиденды</option>
+                        </select>
+                    </label>
+                    <button class="btn secondary full">Синхронизировать</button>
+                    <p class="hint" id="tinkoffResult">Мы никогда не сохраняем токен открытым текстом.</p>
+                </form>
+                <form id="fileImportForm" class="form-card">
+                    <h3>Импорт файла</h3>
+                    <label>Файл операций (CSV)
+                        <input type="file" name="file" accept=".csv,.txt" required>
+                    </label>
+                    <label>Номер счёта
+                        <input name="accountNumber" placeholder="TINKOFF-123" required>
+                    </label>
+                    <button class="btn primary full">Загрузить</button>
+                    <p class="hint" id="fileImportResult">Формат: Дата, Операция, Тикер, Количество, Цена, Комиссия</p>
+                </form>
+            </div>
         </section>
     </main>
 

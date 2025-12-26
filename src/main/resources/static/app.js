@@ -71,13 +71,46 @@ const api = {
     async getDividends(userId) {
         return fetch(`/api/reports/dividends/${userId}`).then(checkJson('Нет дивидендов'));
     },
-    async syncTinkoff(payload) {
-        const res = await fetch('/api/integrations/tinkoff/sync', {
+    async syncTinkoff(payload, userId) {
+        const res = await fetch(`/api/integrations/tinkoff/sync?userId=${userId}`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error('API Т‑Инвестиций недоступно');
+        return res.json();
+    },
+    async getPortfolioAnalytics(userId) {
+        return fetch(`/api/analytics/portfolio/${userId}`).then(checkJson('Аналитика недоступна'));
+    },
+    async getDividendCalendar(userId, monthsAhead = 12) {
+        return fetch(`/api/analytics/dividends/${userId}?monthsAhead=${monthsAhead}`)
+            .then(checkJson('Календарь недоступен'));
+    },
+    async calculateRebalance(userId, targets) {
+        const res = await fetch(`/api/analytics/rebalance/${userId}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(targets),
+        });
+        if (!res.ok) throw new Error('Ошибка расчёта ребаланса');
+        return res.json();
+    },
+    async createSnapshot(userId) {
+        const res = await fetch(`/api/analytics/snapshot/${userId}`, {method: 'POST'});
+        if (!res.ok) throw new Error('Ошибка создания снимка');
+        return res.text();
+    },
+    async importFile(file, userId, accountNumber) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('userId', userId);
+        formData.append('accountNumber', accountNumber);
+        const res = await fetch('/api/import/operations', {
+            method: 'POST',
+            body: formData,
+        });
+        if (!res.ok) throw new Error('Ошибка импорта файла');
         return res.json();
     },
 };
@@ -103,6 +136,13 @@ const selectors = {
     rebalance: sel('rebalanceList'),
     registerResult: sel('registerResult'),
     tinkoffResult: sel('tinkoffResult'),
+    totalValue: sel('totalValue'),
+    totalCost: sel('totalCost'),
+    totalReturn: sel('totalReturn'),
+    sharpeRatio: sel('sharpeRatio'),
+    portfolioStructure: sel('portfolioStructure'),
+    dividendCalendar: sel('dividendCalendar'),
+    fileImportResult: sel('fileImportResult'),
 };
 
 function ensureUserId() {
@@ -403,15 +443,101 @@ function renderRebalance() {
 
 async function handleTinkoff(e) {
     e.preventDefault();
-    const payload = Object.fromEntries(new FormData(e.currentTarget));
     try {
-        const response = await api.syncTinkoff(payload);
+        const userId = ensureUserId();
+        const payload = Object.fromEntries(new FormData(e.currentTarget));
+        const response = await api.syncTinkoff(payload, userId);
         const ops = response?.summary?.estimatedOps;
         const summary = ops ? `~${ops} операций` : '';
         selectors.tinkoffResult.textContent = `${response.message}. Режим: ${response.mode}. ${summary}`;
         toast(response.message);
+        setTimeout(() => hydrate(), 2000);
     } catch (err) {
         selectors.tinkoffResult.textContent = err.message;
+        toast(err.message, 'error');
+    }
+}
+
+async function handleFileImport(e) {
+    e.preventDefault();
+    try {
+        const userId = ensureUserId();
+        const formData = new FormData(e.currentTarget);
+        const file = formData.get('file');
+        const accountNumber = formData.get('accountNumber');
+        
+        if (!file || !file.size) {
+            throw new Error('Выберите файл');
+        }
+        
+        const result = await api.importFile(file, userId, accountNumber);
+        const message = result.success 
+            ? `Импортировано: ${result.operationsCount} операций, ${result.assetsCount} активов`
+            : `Ошибки: ${result.errors.join(', ')}`;
+        selectors.fileImportResult.textContent = message;
+        toast(result.success ? 'Файл импортирован' : 'Ошибки при импорте', result.success ? 'info' : 'error');
+        if (result.success) {
+            setTimeout(() => hydrate(), 1000);
+        }
+    } catch (err) {
+        selectors.fileImportResult.textContent = err.message;
+        toast(err.message, 'error');
+    }
+}
+
+async function loadAnalytics() {
+    try {
+        const userId = ensureUserId();
+        const analytics = await api.getPortfolioAnalytics(userId);
+        
+        selectors.totalValue.textContent = formatMoney(analytics.totalValue);
+        selectors.totalCost.textContent = formatMoney(analytics.totalCost);
+        selectors.totalReturn.textContent = `${analytics.totalReturn.toFixed(2)}%`;
+        selectors.totalReturn.style.color = analytics.totalReturn >= 0 ? '#10b981' : '#ef4444';
+        selectors.sharpeRatio.textContent = analytics.sharpeRatio.toFixed(2);
+        
+        // Структура портфеля
+        const structureNode = selectors.portfolioStructure;
+        structureNode.innerHTML = '';
+        const byType = analytics.byType || {};
+        const byCurrency = analytics.byCurrency || {};
+        
+        const typeDiv = document.createElement('div');
+        typeDiv.innerHTML = '<h4>По типам</h4><ul class="stat-list"></ul>';
+        const typeList = typeDiv.querySelector('ul');
+        Object.entries(byType).forEach(([type, value]) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${type}</span><strong>${formatMoney(value)}</strong>`;
+            typeList.appendChild(li);
+        });
+        
+        const currencyDiv = document.createElement('div');
+        currencyDiv.innerHTML = '<h4>По валютам</h4><ul class="stat-list"></ul>';
+        const currencyList = currencyDiv.querySelector('ul');
+        Object.entries(byCurrency).forEach(([currency, value]) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${currency}</span><strong>${formatMoney(value)}</strong>`;
+            currencyList.appendChild(li);
+        });
+        
+        structureNode.appendChild(typeDiv);
+        structureNode.appendChild(currencyDiv);
+        
+        // Календарь дивидендов
+        const calendar = await api.getDividendCalendar(userId, 12);
+        const calendarNode = selectors.dividendCalendar;
+        calendarNode.innerHTML = '<h4>Ближайшие выплаты</h4><ul class="stat-list"></ul>';
+        const calendarList = calendarNode.querySelector('ul');
+        calendar.events.slice(0, 10).forEach(event => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${event.date} • ${event.ticker}</span>
+                <strong>${formatMoney(event.amount)}</strong>
+            `;
+            calendarList.appendChild(li);
+        });
+        
+    } catch (err) {
         toast(err.message, 'error');
     }
 }
@@ -426,6 +552,7 @@ async function hydrate() {
         loadStructure(),
         loadAssets(),
         loadDividends(),
+        loadAnalytics(),
     ]);
     toast('Данные обновлены');
 }
@@ -442,9 +569,10 @@ function init() {
         loadAssets();
     });
     document.getElementById('tinkoffForm').addEventListener('submit', handleTinkoff);
-    document.getElementById('syncTinkoff').addEventListener('click', e => {
+    document.getElementById('fileImportForm').addEventListener('submit', handleFileImport);
+    document.getElementById('refreshAnalytics').addEventListener('click', e => {
         e.preventDefault();
-        document.getElementById('tinkoffForm').dispatchEvent(new Event('submit', {cancelable: true}));
+        loadAnalytics();
     });
 }
 

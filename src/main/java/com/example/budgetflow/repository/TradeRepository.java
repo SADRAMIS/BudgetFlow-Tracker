@@ -10,5 +10,6 @@ import java.util.List;
 @Repository
 public interface TradeRepository extends JpaRepository<Trade,Long> {
     List<Trade> findByAssetId(Long assetId);
+    List<Trade> findByAssetIdAndType(Long assetId, String type);
     List<Trade> findByDateBetween(LocalDate startDate, LocalDate endDate);
 }

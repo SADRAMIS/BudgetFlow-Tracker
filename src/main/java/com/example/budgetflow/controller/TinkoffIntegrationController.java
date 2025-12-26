@@ -7,10 +7,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/integrations/tinkoff")
@@ -20,10 +18,13 @@ public class TinkoffIntegrationController {
     private final TinkoffIntegrationService tinkoffIntegrationService;
 
     @PostMapping("/sync")
-    public ResponseEntity<TinkoffSyncResponse> sync(@RequestBody @Valid TinkoffSyncRequest request) {
-        TinkoffSyncResponse response = tinkoffIntegrationService.enqueueSync(request);
+    public ResponseEntity<TinkoffSyncResponse> sync(
+            @RequestBody @Valid TinkoffSyncRequest request,
+            @RequestParam Long userId) {
+        TinkoffSyncResponse response = tinkoffIntegrationService.enqueueSync(request, userId);
         return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
 }
+
 
 
